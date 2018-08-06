@@ -1,12 +1,14 @@
 import React from "react";
 import { Text, View, SafeAreaView, Dimensions, TouchableOpacity, StatusBar,
-Image, AsyncStorage, Switch } from "react-native";
-import {Constants} from 'expo'
+Image, AsyncStorage, Switch} from "react-native";
+import {Constants, Font} from 'expo'
 import Expo from 'expo'
 import firebase from 'firebase'
+
 import Icons from '@expo/vector-icons/Ionicons'
 import * as Animatable from 'react-native-animatable'
 import GestureRecognizer from 'react-native-swipe-gestures'
+
 var soundObject = new Expo.Audio.Sound();
 var { height, width } = Dimensions.get("window");
 var BG = require('../ImageAssets/BG.png')
@@ -18,6 +20,7 @@ var SETTINGSBG =require('../ImageAssets/SETTINGSBG.png')
 var SETTINGSLOGO = require('../ImageAssets/SETTINGSLOGO.png')
 
 
+
 class HomeScreen extends React.Component {
   constructor(){
     super();
@@ -25,7 +28,8 @@ class HomeScreen extends React.Component {
       musicMuted : false,
       settingsScreen : false,
       points : 0,
-      switchValue : true
+      switchValue : true,
+      fontLoaded : false
     }
   }
 
@@ -60,9 +64,20 @@ _retrieveData = async () => {
     console.log(error)
   }
 }
- 
-  componentWillMount(){
 
+
+async componentDidMount() {
+  await Font.loadAsync({
+    'buttonFont' : require('../ImageAssets/Fonts/button_font.ttf')
+  })
+  this.setState({
+    fontLoaded :true
+  })
+}
+  componentWillMount(){
+    
+    
+   
     async function loadAudio(){
       try {
       await  soundObject.loadAsync(require('../ImageAssets/Music.wav'))
@@ -134,163 +149,127 @@ async onSwipeRight(gestureState){
    })
 }
 
+conditionalRenderingSwitch(){
+  if(this.state.switchValue === true){
+    return(
+      <Switch
+      value = {this.state.switchValue}
+        onValueChange = {() => {
+          if(this.state.switchValue === true){
+            this.setState({
+              switchValue : false
+            })
+          } else if(this.state.switchValue === false){
+            this.setState({
+              switchValue : true
+            })
+          }
+        }}
+        tintColor = 'white'
+        onTintColor = 'white'
+        thumbTintColor = 'black'
+      />
+    )
+  }
+  else if(this.state.switchValue === false){
+    return(
+      <Switch
+      value = {this.state.switchValue}
+        onValueChange = {() => {
+          if(this.state.switchValue === true){
+            this.setState({
+              switchValue : false
+            })
+          } else if(this.state.switchValue === false){
+            this.setState({
+              switchValue : true
+            })
+          }
+        }}
+        tintColor = 'white'
+        onTintColor = 'white'
+        thumbTintColor = 'white'
+      />
+    )
+  }
+}
 
 conditionalScreenRendering(){
-  if(this.state.settingsScreen === false){
+  if(this.state.settingsScreen === false && this.state.fontLoaded === true){
     return(
-<Animatable.View animation = 'slideInLeft' ref = {(ref) => {
-  this.MainView = ref
-}} style = {{height : height,width : width, backgroundColor : 'black',
-      justifyContent : 'center', alignItems : 'center'
-       }}>
-        <StatusBar hidden = {true}/>
+      <View style = {{flex : 1 , paddingTop : Constants.statusBarHeight,
+      justifyContent : 'center', alignItems : 'center'}}>
+        <View style = {{backgroundColor : 'black',height : height - 80,
+        width : width - 40,}}>
+        <View style = {{width : width - 40, height : 200, alignItems : 'center', justifyContent : 'center',
+        marginTop : 100}}>
+         <Image source = {LOGO} 
+              resizeMethod = 'scale'
+              style
+               = {{height : 180, width : 300}}
+            />
+            </View>
      
-        <View style = {{justifyContent : 'center', alignItems : 'center',
-       margin : 80, height : height, width : width}}>
-        <Image 
-          source = {BG}
-          style = {{height : '100%', width : '100%' }}
-        />
-        <Animatable.View animation = 'slideInDown' style  ={{position : 'absolute', 
-        top : 100, height : 200, width : width, alignItems : 'center'}}>
-        <Image 
-          source = {LOGO}
-          style = {{height : '100%', width : '100%'}}
-        />
-        </Animatable.View>
-       
-        <Animatable.View animation = 'slideInLeft' style  ={{position : 'absolute', 
-        top : 400,height : 250, width : width, alignItems : 'center'}}>
-        <TouchableOpacity  onPress = {() => {
-            this.props.navigation.navigate('GameState')
-        }}>
-         <Image 
-          source = {PLAY}
-          style = {{height : 80, width : width - 100}}
-        />
-        </TouchableOpacity>
-        <TouchableOpacity onPress = {async () => {
-        await this.MainView.slideOutLeft(400)
-        await  this.setState({
-            settingsScreen : true
-          })
-          
-        }}>
-        <Image 
-          source = {SETTINGS}
-          style = {{height : 100, width : width - 100, top : 20, right : 5}}
-        />
-        </TouchableOpacity>
-        </Animatable.View>
-        </View>
         
-        <View style = {{
-          position : 'absolute', top : 50, left : width - 100 
-        }}>
-          <Text style = {{fontSize : 24}}>
-            Points:
-          </Text>
-          <Text style = {{fontSize : 24}}>
-            {this.state.points}
-          </Text>
-        </View>
-      </Animatable.View>   
-    )
-  }else if (this.state.settingsScreen === true){
-    return(
-      <GestureRecognizer
-        onSwipeRight = {state => {
-          this.onSwipeRight(state)
-        }}
-      >
-      <Animatable.View animation = 'lightSpeedIn' ref ={(ref) => {
-        this.settingsRef = ref
-      }} style = {{height : height,width : width, backgroundColor : 'black',
-      justifyContent : 'center', alignItems : 'center'
-       }}>
-        <StatusBar hidden = {true}/>
-        <Animatable.View style = {{justifyContent : 'center', alignItems : 'center',
-       margin : 80, height : height, width : width}}>
-       <Image  source = {SETTINGSBG} style = {{height : '100%', width : '100%'}}/>
-       </Animatable.View>
-       
-       <Animatable.Image animation = 'slideInDown' source = {SETTINGSLOGO} style = {{height : 100, width : width,
-       position : 'absolute', top : 50}}/>
-       <View style = {{
-         position : 'absolute', top : height - 500
-       }}>
-         <TouchableOpacity style = {{
-           width : width - 120, height : 50, borderWidth : 4,
-           justifyContent : 'space-evenly', alignItems : 'center', borderRadius : 40,
-           flexDirection : 'row', borderColor : 'purple'
-         }}>
-         
-           <Text style = {{fontSize : 24, color : 'purple', fontWeight : 'bold'}}>
-             No Ads
-           </Text>
-          
-          
-           <Text style = {{fontSize : 24, color : 'green', fontWeight : 'bold'}}>
-             $2.99
-           </Text>
-          
-         </TouchableOpacity>
-         
-       </View>
-       <View style = {{
-         position : 'absolute', top : height - 400
-       }}>
-         <TouchableOpacity style = {{
-           width : width - 120, height : 50, borderWidth : 4,
-           justifyContent : 'space-evenly', alignItems : 'center', borderRadius : 40,
-           flexDirection : 'row', borderColor : 'purple'
-         }}>
-         
-           <Text style = {{fontSize : 24, color : 'purple', fontWeight : 'bold'}}>
-             Sound
-           </Text>
-           <Switch 
-              value = {this.state.switchValue}
-              onValueChange = {() => {
-                if(this.state.switchValue === true){
-                  this.muteMusic();
-                  this.setState({
-                    switchValue : false
-                  })
-                }else if (this.state.switchValue === false){
-                  this.resumeMusic();
-                  this.setState({
-                    switchValue : true
-                  })
-                }
-              }}
-            
-           />
-          
-          
-          
-          
-         </TouchableOpacity>
-         
-       </View>
+         <TouchableOpacity onPress = {() => {
+           this.props.navigation.navigate('GameState')
+         }} style = {{backgroundColor : 'white', height : 80, 
+         width : width - 100, alignSelf : 'center', top : 100,
+         justifyContent : 'center', alignItems : 'center'}}>
+              
+              <Text style = {{fontSize : 36, fontFamily : 'buttonFont'}}>
+                Play
+              </Text>
+         </TouchableOpacity>  
+         <TouchableOpacity onPress = {() => {
+           this.setState({
+             settingsScreen : true
+           })
+         }} style = {{backgroundColor : 'white', height : 80, 
+         width : width - 100, alignSelf : 'center', top: 150,
+         justifyContent : 'center', alignItems : 'center'}}>
+              <Text style = {{fontSize : 36, fontFamily : 'buttonFont'}}>
+                Settings
+              </Text>
+         </TouchableOpacity>  
+    
 
-       <View  style = {{top : height - 150, position : 'absolute', 
-       flexDirection : 'row', width : width - 100, justifyContent : 'space-evenly',
-       alignItems : 'center'}}>
-     
-       <Text style = {{
-         fontSize : 18,
-         fontWeight : 'bold',
+        </View>
+      </View>
+    )
+  }else if (this.state.settingsScreen === true && this.state.fontLoaded === true){
+    return(
+      <View style = {{flex : 1, paddingTop : Constants.statusBarHeight, 
+      alignItems : 'center'}}>
+        <View style = {{height : 100, borderWidth : 8, justifyContent : 'center', alignItems : 'center', 
+        top : 50, width : width - 40}}>
+            <Text style = {{fontSize : 50}}>
+              SETTINGS
+            </Text>
+        </View>
+        <View style = {{backgroundColor : 'black', alignItems : 'center',top : 80, height : height - 250, width : width - 40}}>
+        <View style = {{height : 100, borderWidth : 5, justifyContent : 'space-evenly',flexDirection : 'row'
+        , alignItems : 'center', 
+        top : 20, width : width - 60, borderColor : 'white'}}>
+            <Text style = {{fontSize : 32, color : 'white'}}>
+              No Ads
+            </Text>
+            <Text style = {{fontSize : 32, color : 'white'}}>
+              $2.99
+            </Text>
+        </View>
+        <View style = {{height : 100, borderWidth : 5, justifyContent : 'space-evenly',flexDirection : 'row'
+        , alignItems : 'center', 
+        top : 50, width : width - 60, borderColor : 'white'}}>
+            <Text style = {{fontSize : 32, color : 'white'}}>
+              Sound
+            </Text>
+            {this.conditionalRenderingSwitch()}
          
-       }}>
-         Swipe To Go Back
-       </Text>
-       <Icons 
-         name = 'ios-arrow-forward' size = {50} 
-       />
-       </View>
-       </Animatable.View>
-       </GestureRecognizer>
+        </View>
+        </View>
+           
+      </View>
     )
   }
 }
@@ -319,7 +298,7 @@ conditionalRendering(){
 
   render() {
     return (
-      <View style = {{backgroundColor : 'black', flex : 1}}>
+      <View style = {{backgroundColor : 'white', flex : 1}}>
       {this.conditionalScreenRendering()}
       </View>
       

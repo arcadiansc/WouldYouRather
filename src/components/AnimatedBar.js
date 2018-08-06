@@ -1,5 +1,6 @@
 import React from 'react';
 import { Animated, Text } from 'react-native'
+import {Font} from 'expo'
 
 class AnimatedBar extends React.Component {
 
@@ -8,11 +9,18 @@ class AnimatedBar extends React.Component {
         this._width = new Animated.Value(0)
         this.state = {
             color : 'white',
+            fontLoaded : false
 
         }
     }
 
-    componentDidMount(){
+  async  componentDidMount(){
+      await Font.loadAsync({
+          "good_times" : require('../ImageAssets/Fonts/good_times.ttf')
+      })
+      this.setState({
+          fontLoaded : true
+      })
         const {value, delay} = this.props;
         Animated.sequence([
             Animated.delay(delay),
@@ -35,10 +43,18 @@ class AnimatedBar extends React.Component {
             alignItems : 'center'
         }
         return(
+
             <Animated.View style = {barStyles}>
-                <Text style = {{fontSize : 36, color : 'black', textAlign : 'left'}}>
+                {
+                    this.state.fontLoaded ? (
+                        <Text style = {{fontSize : 36,
+                         color : 'black', textAlign : 'left',
+                         fontFamily : 'good_times'}}>
                     {this.props.text}%
                 </Text>
+                    ) : null
+                }
+               
             </Animated.View>
         );
     }
