@@ -69,7 +69,8 @@ _retrieveData = async () => {
 
 async componentDidMount() {
   await Font.loadAsync({
-    'buttonFont' : require('../ImageAssets/Fonts/button_font.ttf')
+    'buttonFont' : require('../ImageAssets/Fonts/button_font.ttf'),
+    'gothic' : require('../ImageAssets/Fonts/gothic.ttf')
   })
   this.setState({
     fontLoaded :true
@@ -208,18 +209,22 @@ conditionalRenderingSwitch(){
 conditionalScreenRendering(){
   if(this.state.settingsScreen === false && this.state.fontLoaded === true){
     return(
-      <Animatable.View  style = {{flex : 1 , paddingTop : Constants.statusBarHeight,
+      <Animatable.View ref = {(ref) => {
+        this.WelcomeMainView = ref
+      }} animation = 'slideInLeft'
+        style = {{flex : 1 , paddingTop : Constants.statusBarHeight,
       justifyContent : 'center', alignItems : 'center'}}>
         <Animatable.View ref = {(ref) => {
           this.mainContainer = ref
-        }} animation = 'slideInLeft' style = {{backgroundColor : 'black',height : height - 80,
+        }}  style = {{backgroundColor : 'black',height : height - 80,
         width : width - 40,}}>
         <View style = {{width : width - 40, height : 200, alignItems : 'center', justifyContent : 'center',
         marginTop : 100}}>
          <Animatable.Image ref = {(ref) => {
            this.logoImage = ref
-         }} animation = 'slideInLeft' source = {LOGO} 
-              resizeMethod = 'scale'
+         }}  source = {LOGO} 
+              resizeMethod = 'resize'
+              resizeMode = 'contain'
               style
                = {{height : 180, width : 300}}
             />
@@ -227,22 +232,23 @@ conditionalScreenRendering(){
      
           <Animatable.View  ref = {(ref) => {
             this.buttonOne = ref
-          }} animation = 'slideInLeft'>
+          }} >
          <TouchableOpacity onPress = {() => {
            this.props.navigation.navigate('GameState')
-         }} style = {{backgroundColor : 'white', height : 80, 
-         width : width - 100, alignSelf : 'center', top : 100,
+         }} 
+         style = {{backgroundColor : 'white', height : 80, 
+         width : width - 100, alignSelf : 'center', top : 140,
          justifyContent : 'space-evenly', alignItems : 'center', flexDirection : 'row'}}>
               <Animatable.View animation = 'flash' iterationCount = 'infinite' 
               easing = 'linear'>
-              <Icons name = 'ios-arrow-back' size = {35}/>
+              <Icons name = 'ios-arrow-forward' size = {35}/>
               </Animatable.View>
               <Text style = {{fontSize : 36, fontFamily : 'buttonFont'}}>
-                Play
+                PLAY
               </Text>
               <Animatable.View animation = 'flash' iterationCount = 'infinite'
               easing = 'linear'>
-              <Icons name = 'ios-arrow-forward' size = {35}/>
+              <Icons name = 'ios-arrow-back' size = {35}/>
               </Animatable.View>
              
               
@@ -250,21 +256,18 @@ conditionalScreenRendering(){
          </Animatable.View>
          <Animatable.View ref = {(ref) => {
            this.buttonTwo = ref
-         }} animation = 'slideInLeft'>
+         }} >
          <TouchableOpacity onPress = {async () =>
           {
-           this.buttonOne.slideOutLeft(200)
-           this.buttonTwo.slideOutLeft(200)
-           this.logoImage.slideOutLeft(200)
-           await this.mainContainer.slideOutLeft(200) 
+            await this.WelcomeMainView.slideOutLeft(200)
            this.setState({
              settingsScreen : true
            })
          }} style = {{backgroundColor : 'white', height : 80, 
-         width : width - 100, alignSelf : 'center', top: 150,
+         width : width - 100, alignSelf : 'center', top: 170,
          justifyContent : 'center', alignItems : 'center'}}>
               <Text style = {{fontSize : 36, fontFamily : 'buttonFont'}}>
-                Settings
+                SETTINGS
               </Text>
          </TouchableOpacity>  
          </Animatable.View>
@@ -274,37 +277,39 @@ conditionalScreenRendering(){
     )
   }else if (this.state.settingsScreen === true && this.state.fontLoaded === true){
     return(
-      <View style = {{flex : 1, paddingTop : Constants.statusBarHeight, 
+      <Animatable.View ref = {(ref) => {
+        this.MainView = ref
+      }} animation = 'slideInRight'  style = {{flex : 1, paddingTop : Constants.statusBarHeight, 
       alignItems : 'center'}}>
         <Animatable.View ref = {(ref) => {
           this.settingsHeader = ref
-        }} animation = 'slideInRight' style = {{height : 100, borderWidth : 8, justifyContent : 'center', alignItems : 'center', 
+        }}  style = {{height : 100, borderWidth : 8, justifyContent : 'center', alignItems : 'center', 
         top : 50, width : width - 40}}>
-            <Text style = {{fontSize : 50}}>
-              SETTINGS
+            <Text style = {{fontSize : 50 , fontFamily : 'gothic'}}>
+              Settings
             </Text>
         </Animatable.View>
         <Animatable.View ref = {(ref) => {
           this.blackContainer = ref
-        }} animation = 'slideInRight' style = {{backgroundColor : 'black', alignItems : 'center',top : 80, height : height - 250, width : width - 40}}>
+        }} style = {{backgroundColor : 'black', alignItems : 'center',top : 80, height : height - 250, width : width - 40}}>
         <Animatable.View ref = {(ref) => {
           this.adsView = ref
-        }} animation = 'slideInRight' style = {{height : 100, borderWidth : 5, justifyContent : 'space-evenly',flexDirection : 'row'
-        , alignItems : 'center', 
+        }}  style = {{height : 100, borderWidth : 5, justifyContent : 'space-between',flexDirection : 'row'
+        , alignItems : 'center', padding : 10,
         top : 20, width : width - 60, borderColor : 'white'}}>
-            <Text style = {{fontSize : 32, color : 'white'}}>
+            <Text style = {{fontSize : 32, color : 'white', fontFamily : 'gothic'}}>
               No Ads
             </Text>
-            <Text style = {{fontSize : 32, color : 'white'}}>
+            <Text style = {{fontSize : 32, color : 'white' ,fontFamily : 'gothic'}}>
               $2.99
             </Text>
         </Animatable.View>
         <Animatable.View ref = {(ref) => {
           this.soundView = ref
-        }} animation = 'slideInRight' style = {{height : 100, borderWidth : 5, justifyContent : 'space-evenly',flexDirection : 'row'
-        , alignItems : 'center', 
+        }}  style = {{height : 100, borderWidth : 5, justifyContent : 'space-between',flexDirection : 'row'
+        , alignItems : 'center', padding : 10,
         top : 50, width : width - 60, borderColor : 'white'}}>
-            <Text style = {{fontSize : 32, color : 'white'}}>
+            <Text style = {{fontSize : 32, color : 'white', fontFamily : 'gothic'}}>
               Sound
             </Text>
             {this.conditionalRenderingSwitch()}
@@ -312,10 +317,7 @@ conditionalScreenRendering(){
         </Animatable.View>
         <TouchableOpacity
           onPress = { async () => {
-            this.settingsHeader.slideOutRight(200)
-            this.soundView.slideOutRight(200)
-            this.adsView.slideOutRight(200)
-            await this.blackContainer.slideOutRight(200)
+            await this.MainView.slideOutRight(200)
             this.setState({
               settingsScreen : false
             })
@@ -327,7 +329,7 @@ conditionalScreenRendering(){
         </TouchableOpacity>
         </Animatable.View>
            
-      </View>
+      </Animatable.View>
     )
   }
 }

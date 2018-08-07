@@ -8,7 +8,8 @@ import {
   Image,
   StatusBar,
   Platform,
-  AsyncStorage
+  AsyncStorage,
+  
 } from "react-native";
 import Card from "../components/Card";
 import Expo from "expo";
@@ -61,9 +62,9 @@ class GameState extends React.Component {
 
   componentWillMount() {
     this._retrieveData();
-    const firstArray = this.getRandomInt(0, 15);
+    const firstArray = this.getRandomInt(0, 27);
     const firstArraySecond = this.getRandomInt(0, 2);
-    const secondArray = this.getRandomInt(0, 15);
+    const secondArray = this.getRandomInt(0, 27);
     var secondArraySecond = this.getRandomInt(0, 2);
     console.log(secondArraySecond);
 
@@ -146,8 +147,8 @@ class GameState extends React.Component {
   }
 
   Randomize() {
-    var firstArray = this.getRandomInt(0, 15);
-    var secondArray = this.getRandomInt(0, 15);
+    var firstArray = this.getRandomInt(0, 27);
+    var secondArray = this.getRandomInt(0, 27);
     var firstArraySecond = this.getRandomInt(0, 2);
     var secondArraySecond = this.getRandomInt(0, 2);
 
@@ -306,7 +307,7 @@ class GameState extends React.Component {
             }}
             style={{
               width: width - 40,
-              height: 250,
+              height: 260,
               backgroundColor: "black",
               alignSelf: "center",
               top: 40,
@@ -356,7 +357,7 @@ class GameState extends React.Component {
             }}
             style={{
               width: width - 40,
-              height: 250,
+              height: 260,
               backgroundColor: "black",
               alignSelf: "center",
               top: 50,
@@ -373,6 +374,7 @@ class GameState extends React.Component {
             style={{
               width: width - 40,
               flexDirection: "row",
+              right : width - 320,
               top: 80,
               justifyContent: "space-evenly"
             }}
@@ -384,34 +386,43 @@ class GameState extends React.Component {
             >
               <Icons name="ios-arrow-back" size={50} />
             </TouchableOpacity>
-            <Text style={{ fontSize: 40 }}>{this.state.points}</Text>
+            <Text style={{ fontSize: 40, left : 35 }}>{this.state.points}</Text>
           </View>
           <Animatable.Image animation = 'zoomIn' 
           ref = {(ref) => {
             this.ORImage = ref
           }}
-            source = {OR} resizeMode = 'contain' style = {{height : 150, 
-            width : 150, position : 'absolute', top : height - 450, left : width - 260}}
+            source = {OR} resizeMode = 'contain' style = {{height : 120, 
+            width : 120, position : 'absolute', top : height - 430, left : width - 260}}
           />
         </View>
       );
     } else if (this.state.backgroundVisible === true && this.state.fontLoaded) {
       return (
-        <View
+        <Animatable.View
+        animation = 'slideInRight'
           style={{
             backgroundColor: "white",
             height: height,
             width: width,
             paddingTop:
-              Platform.OS === "ios" ? 40 : Constants.statusBarHeight - 10,
+              Platform.OS === "ios" ? 10 : Constants.statusBarHeight - 10,
             justifyContent: "space-evenly"
           }}
         >
+        <TouchableOpacity onPress = {async () => {
+           this.ViewOne.slideOutLeft(200);
+    this.ViewTwo.slideOutLeft(200);
+    this.ViewThree.slideOutLeft(200);
+    await this.ViewFour.slideOutLeft(200);
+    this.Randomize();
+    this.setState({ backgroundVisible: false });
+        }}>
           <Animatable.View
             ref={ref => {
               this.ViewOne = ref;
             }}
-            animation="zoomIn"
+           
             style={{
               width: width - 40,
               alignSelf: "center",
@@ -425,10 +436,10 @@ class GameState extends React.Component {
               ref={ref => {
                 this.ResultsTextOne = ref;
               }}
-              animation="zoomIn"
+              
               style={{ fontSize: 40, fontFamily: "gothic" }}
             >
-              RESULTS
+              Results
             </Animatable.Text>
           </Animatable.View>
           <GestureRecognizer
@@ -440,13 +451,15 @@ class GameState extends React.Component {
               ref={ref => {
                 this.ViewTwo = ref;
               }}
-              animation="zoomIn"
+             
               style={{
                 height: height - 200,
                 width: width - 40,
                 alignSelf: "center",
                 backgroundColor: "black",
-                justifyContent: "space-evenly"
+                justifyContent: "space-evenly",
+                top : 20
+             
               }}
             >
               <View
@@ -517,33 +530,36 @@ class GameState extends React.Component {
                   width: width,
                   alignSelf: "center",
                   alignItems: "center",
-                  flexDirection: "row",
+                  
                   justifyContent: "center"
                 }}
               >
-                <View style={{ right: 10, top: 2 }}>
-                  <Icons name="ios-arrow-back" size={50} color="white" />
-                </View>
+               
                 <Text
                   style={{
                     color: "white",
-                    fontSize: 24,
+                    fontSize: 30,
                     textAlign: "center",
-                    fontFamily: "gothic"
+                    fontFamily: "gothic", 
+                    top : 20
                   }}
                 >
-                  Swipe
+                  Tap Anywhere to Continue
                 </Text>
               </View>
             </Animatable.View>
           </GestureRecognizer>
-        </View>
+          </TouchableOpacity>
+        </Animatable.View>
       );
     }
   }
 
   render() {
-    return <View>{this.conditionalLoading()}</View>;
+    return <View style = {{flex : 1,
+    backgroundColor : 'white'}}>
+    {this.conditionalLoading()}
+    </View>;
   }
 }
 
