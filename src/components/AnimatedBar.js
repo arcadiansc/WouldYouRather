@@ -16,7 +16,8 @@ class AnimatedBar extends React.Component {
 
   async  componentDidMount(){
       await Font.loadAsync({
-          "good_times" : require('../ImageAssets/Fonts/good_times.ttf')
+          "good_times" : require('../ImageAssets/Fonts/good_times.ttf'),
+          "gothic" : require('../ImageAssets/Fonts/gothic.ttf')
       })
       this.setState({
           fontLoaded : true
@@ -49,7 +50,7 @@ class AnimatedBar extends React.Component {
                     this.state.fontLoaded ? (
                         <Text style = {{fontSize : 36,
                          color : 'black', textAlign : 'left',
-                         fontFamily : 'good_times'}}>
+                         fontFamily : 'gothic', bottom : 2}}>
                     {this.props.text}%
                 </Text>
                     ) : null

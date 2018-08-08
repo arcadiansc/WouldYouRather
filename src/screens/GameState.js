@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import Card from "../components/Card";
 import Expo from "expo";
-import { Constants, Font } from "expo";
+import { Constants, Font, AdMobInterstitial } from "expo";
 import * as Animatable from "react-native-animatable";
 import Modal from "react-native-modal";
 import Icons from "@expo/vector-icons/Ionicons";
@@ -105,7 +105,7 @@ class GameState extends React.Component {
       });
     });
   }
-
+  //Retrieves points when component mounts. 
   _retrieveData = async () => {
     try {
       const value = await AsyncStorage.getItem("Points");
@@ -120,7 +120,7 @@ class GameState extends React.Component {
       console.log(error);
     }
   };
-
+  //Async Storage function that stores the points everytime they are incremented. 
   _storeData = async () => {
     try {
       await AsyncStorage.setItem("Points", this.state.points.toString());
@@ -129,7 +129,7 @@ class GameState extends React.Component {
       console.log(error);
     }
   };
-
+  //plays sounds click when option is chosen.
   _playClick = async () => {
     const soundObect = new Expo.Audio.Sound();
     try {
@@ -145,7 +145,7 @@ class GameState extends React.Component {
   getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min)) + min;
   }
-
+  //Once the questions are already chosen everytime a new one is called for this function randomizes them. 
   Randomize() {
     var firstArray = this.getRandomInt(0, 27);
     var secondArray = this.getRandomInt(0, 27);
@@ -181,15 +181,18 @@ class GameState extends React.Component {
     this.image.transitionTo({ opacity: 0.2 });
   }
 
+
+  //async function that responds on results screen swipe
   async onSwipeLeft(gestureState) {
     this.ViewOne.slideOutLeft(200);
     this.ViewTwo.slideOutLeft(200);
-    this.ViewThree.slideOutLeft(200);
-    await this.ViewFour.slideOutLeft(200);
+   await this.ViewThree.slideOutLeft(200);
+   
     this.Randomize();
     this.setState({ backgroundVisible: false });
   }
 
+  //async function that gets the qeuestions
   async databaseFunction() {
     var database = firebase.database();
     const questionOneRef = database.ref(this.state.firstArrayNum + "/" + 1);
@@ -223,7 +226,8 @@ class GameState extends React.Component {
         alert(error);
       });
   }
-
+//async function that receives the total votes from the database function and returns a
+//percentage for each one. 
   async getPercentages() {
     const questionOne = this.state.numberQuestionOne;
 
@@ -241,6 +245,28 @@ class GameState extends React.Component {
       percentageTwo: perTwo
     });
   }
+  async showFullAd(){
+    AdMobInterstitial.setAdUnitID('ca-app-pub-3940256099942544/4411468910');
+    AdMobInterstitial.setTestDeviceID('EMULATOR')
+    AdMobInterstitial.addEventListener('interstitialDidLoad',() => {
+      console.log("interstitialDidLoad")
+    })
+    AdMobInterstitial.addEventListener('interstitialDidFailToLoad', () => {
+      console.log("failed to load")
+    })
+    AdMobInterstitial.addEventListener('interstitialDidOpen',() => {
+      console.log('Did Open')
+    })
+    AdMobInterstitial.addEventListener('interstitialDidClose', () => {
+      console.log('Did Close')
+    })
+    AdMobInterstitial.addEventListener('interstitialWillLeaveApplication', () => {
+      console.log('Left Application')
+    })
+    await AdMobInterstitial.requestAdAsync();
+    await AdMobInterstitial.showAdAsync();
+  }
+  
 
   conditionalLoading() {
     if (
@@ -263,7 +289,7 @@ class GameState extends React.Component {
             }}
             style={{
               width: width - 40,
-              borderWidth: 8,
+              borderWidth: 6,
               alignSelf: "center",
               height: 100,
               justifyContent: "center",
@@ -272,7 +298,7 @@ class GameState extends React.Component {
           >
             <Text style={{ fontSize: 32, fontFamily : 'gothic' }}>Would You Rather</Text>
           </Animatable.View>
-          <Animatable.View animation = 'slideInLeft'
+          <Animatable.View animation = 'slideInRight'
           ref = {(ref)=> {
             this.questionOne = ref
           }}>
@@ -324,7 +350,7 @@ class GameState extends React.Component {
             ref = {(ref) => {
               this.questionTwo = ref
             }}
-           animation = 'slideInRight'>
+           animation = 'slideInLeft'>
           <TouchableOpacity
            onPress={async () => {
               this.setState({
@@ -386,7 +412,7 @@ class GameState extends React.Component {
             >
               <Icons name="ios-arrow-back" size={50} />
             </TouchableOpacity>
-            <Text style={{ fontSize: 40, left : 35 }}>{this.state.points}</Text>
+            <Text style={{ fontSize: 40, left : 25 }}>{this.state.points}</Text>
           </View>
           <Animatable.Image animation = 'zoomIn' 
           ref = {(ref) => {
@@ -405,16 +431,16 @@ class GameState extends React.Component {
             backgroundColor: "white",
             height: height,
             width: width,
-            paddingTop:
-              Platform.OS === "ios" ? 10 : Constants.statusBarHeight - 10,
-            justifyContent: "space-evenly"
+            paddingTop:Constants.statusBarHeight,
+            
           }}
         >
         <TouchableOpacity onPress = {async () => {
            this.ViewOne.slideOutLeft(200);
     this.ViewTwo.slideOutLeft(200);
-    this.ViewThree.slideOutLeft(200);
-    await this.ViewFour.slideOutLeft(200);
+   
+   await this.ViewThree.slideOutLeft(200);
+  await this.showFullAd()
     this.Randomize();
     this.setState({ backgroundVisible: false });
         }}>
@@ -462,7 +488,7 @@ class GameState extends React.Component {
              
               }}
             >
-              <View
+              {/* <View
                 style={{ position: "absolute", top: height - 580, left: 30 }}
               >
                 <AnimatedBar
@@ -479,13 +505,13 @@ class GameState extends React.Component {
                   delay={DELAY}
                   text={this.state.percentageTwo}
                 />
-              </View>
+              </View> */}
               <Animatable.View
                 ref={ref => {
                   this.ViewThree = ref;
                 }}
                 style={{
-                  height: 150,
+                  height: 400,
                   width: width - 120,
                   alignSelf: "center",
                   justifyContent: "space-evenly"
@@ -501,18 +527,13 @@ class GameState extends React.Component {
                 >
                   {this.state.questionOne}
                 </Text>
-              </Animatable.View>
-              <Animatable.View
-                ref={ref => {
-                  this.ViewFour = ref;
-                }}
-                style={{
-                  height: 150,
-                  width: width - 120,
-                  alignSelf: "center",
-                  justifyContent: "space-evenly"
-                }}
-              >
+                <AnimatedBar
+                  value={this.state.percentageOne}
+                  delay={DELAY}
+                  text={this.state.percentageOne}
+                />
+             
+           
                 <Text
                   style={{
                     color: "white",
@@ -521,27 +542,37 @@ class GameState extends React.Component {
                     fontFamily: "gothic"
                   }}
                 >
+                
                   {this.state.questionTwo}
                 </Text>
+                <AnimatedBar
+                  value={this.state.percentageTwo}
+                  delay={DELAY}
+                  text={this.state.percentageTwo}
+                />
               </Animatable.View>
-
+              <View style = {{backgroundColor : 'white',
+              height : 2, width : width - 80, alignSelf : 'center', top : 30}}></View>      
               <View
                 style={{
                   width: width,
                   alignSelf: "center",
                   alignItems: "center",
-                  
-                  justifyContent: "center"
+                
+                  justifyContent : 'center',
+                 
+                  height : 60
                 }}
               >
                
                 <Text
                   style={{
                     color: "white",
-                    fontSize: 30,
+                    fontSize: 22,
                     textAlign: "center",
                     fontFamily: "gothic", 
-                    top : 20
+                    top : 10
+                    
                   }}
                 >
                   Tap Anywhere to Continue

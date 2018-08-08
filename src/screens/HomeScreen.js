@@ -1,7 +1,7 @@
 import React from "react";
 import { Text, View, SafeAreaView, Dimensions, TouchableOpacity, StatusBar,
 Image, AsyncStorage, Switch, Animated} from "react-native";
-import {Constants, Font} from 'expo'
+import {Constants, Font, AdMobRewarded, AdMobInterstitial} from 'expo'
 import Expo from 'expo'
 import firebase from 'firebase'
 
@@ -206,13 +206,40 @@ conditionalRenderingSwitch(){
   }
 }
 
+async showRewardAd(){
+  AdMobRewarded.setTestDeviceID('EMULATOR');
+  AdMobRewarded.setAdUnitID('ca-app-pub-3940256099942544/1712485313');
+  AdMobRewarded.addEventListener("rewardedVideoDidRewardUser", () =>
+  console.log("interstitialDidLoad")
+);
+AdMobRewarded.addEventListener("rewardedVideoDidLoad", () =>
+  console.log("interstitialDidLoad")
+);
+AdMobRewarded.addEventListener("rewardedVideoDidFailToLoad", () =>
+  console.log("interstitialDidLoad")
+);
+AdMobRewarded.addEventListener("rewardedVideoDidOpen", () =>
+  console.log("interstitialDidLoad")
+);
+AdMobRewarded.addEventListener("rewardedVideoDidClose", () =>
+  console.log("interstitialDidLoad")
+);
+AdMobRewarded.addEventListener("rewardedVideoWillLeaveApplication", () =>
+  console.log("interstitialDidLoad")
+);
+await AdMobRewarded.requestAdAsync();
+await AdMobRewarded.showAdAsync();
+
+}
+
+
 conditionalScreenRendering(){
   if(this.state.settingsScreen === false && this.state.fontLoaded === true){
     return(
       <Animatable.View ref = {(ref) => {
         this.WelcomeMainView = ref
       }} animation = 'slideInLeft'
-        style = {{flex : 1 , paddingTop : Constants.statusBarHeight,
+        style = {{height : height, width : width, paddingTop : Constants.statusBarHeight,
       justifyContent : 'center', alignItems : 'center'}}>
         <Animatable.View ref = {(ref) => {
           this.mainContainer = ref
@@ -229,15 +256,17 @@ conditionalScreenRendering(){
                = {{height : 180, width : 300}}
             />
             </View>
-     
-          <Animatable.View  ref = {(ref) => {
-            this.buttonOne = ref
-          }} >
-         <TouchableOpacity onPress = {() => {
+         <View style = {{height : height - 400, justifyContent : 'space-evenly'}}>
+          <TouchableOpacity onPress = {async() => {
+           await this.WelcomeMainView.slideOutLeft
            this.props.navigation.navigate('GameState')
-         }} 
+         }}   >
+         <Animatable.View 
+          ref = {(ref) => {
+            this.buttonOne = ref
+          }}
          style = {{backgroundColor : 'white', height : 80, 
-         width : width - 100, alignSelf : 'center', top : 140,
+         width : width - 100, alignSelf : 'center',
          justifyContent : 'space-evenly', alignItems : 'center', flexDirection : 'row'}}>
               <Animatable.View animation = 'flash' iterationCount = 'infinite' 
               easing = 'linear'>
@@ -252,35 +281,57 @@ conditionalScreenRendering(){
               </Animatable.View>
              
               
-         </TouchableOpacity>  
-         </Animatable.View>
-         <Animatable.View ref = {(ref) => {
-           this.buttonTwo = ref
-         }} >
-         <TouchableOpacity onPress = {async () =>
+         </Animatable.View>  
+         </TouchableOpacity>
+         <TouchableOpacity 
+         onPress = {async () =>
           {
             await this.WelcomeMainView.slideOutLeft(200)
+           
            this.setState({
              settingsScreen : true
            })
-         }} style = {{backgroundColor : 'white', height : 80, 
-         width : width - 100, alignSelf : 'center', top: 170,
+         }} >
+         <Animatable.View 
+          ref = {(ref) => {
+           this.buttonTwo = ref
+         }}
+           style = {{backgroundColor : 'white', height : 80, 
+         width : width - 100, alignSelf : 'center',
          justifyContent : 'center', alignItems : 'center'}}>
               <Text style = {{fontSize : 36, fontFamily : 'buttonFont'}}>
                 SETTINGS
               </Text>
-         </TouchableOpacity>  
-         </Animatable.View>
+         </Animatable.View>  
+         </TouchableOpacity>
+         <TouchableOpacity onPress = {async () =>
+          {
+          this.showRewardAd()
+          }}>
+         <Animatable.View 
+          ref = {(ref) => {
+           this.buttonTwo = ref
+         }}  style = {{backgroundColor : 'white', height : 80, 
+         width : width - 100, alignSelf : 'center', 
+         justifyContent : 'center', alignItems : 'center'}}>
+              <Text style = {{fontSize : 36, fontFamily : 'buttonFont'}}>
+                GET POINTS
+              </Text>
+         </Animatable.View>  
+         </TouchableOpacity>
+         </View>
 
         </Animatable.View>
       </Animatable.View>
     )
   }else if (this.state.settingsScreen === true && this.state.fontLoaded === true){
     return(
+
       <Animatable.View ref = {(ref) => {
         this.MainView = ref
       }} animation = 'slideInRight'  style = {{flex : 1, paddingTop : Constants.statusBarHeight, 
       alignItems : 'center'}}>
+      
         <Animatable.View ref = {(ref) => {
           this.settingsHeader = ref
         }}  style = {{height : 100, borderWidth : 8, justifyContent : 'center', alignItems : 'center', 
@@ -296,7 +347,7 @@ conditionalScreenRendering(){
           this.adsView = ref
         }}  style = {{height : 100, borderWidth : 5, justifyContent : 'space-between',flexDirection : 'row'
         , alignItems : 'center', padding : 10,
-        top : 20, width : width - 60, borderColor : 'white'}}>
+        top : 20, width : width - 100, borderColor : 'white'}}>
             <Text style = {{fontSize : 32, color : 'white', fontFamily : 'gothic'}}>
               No Ads
             </Text>
@@ -308,7 +359,7 @@ conditionalScreenRendering(){
           this.soundView = ref
         }}  style = {{height : 100, borderWidth : 5, justifyContent : 'space-between',flexDirection : 'row'
         , alignItems : 'center', padding : 10,
-        top : 50, width : width - 60, borderColor : 'white'}}>
+        top : 50, width : width - 100, borderColor : 'white'}}>
             <Text style = {{fontSize : 32, color : 'white', fontFamily : 'gothic'}}>
               Sound
             </Text>
