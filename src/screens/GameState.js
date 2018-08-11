@@ -8,12 +8,11 @@ import {
   Image,
   StatusBar,
   Platform,
-  AsyncStorage,
-  
+  AsyncStorage
 } from "react-native";
 import Card from "../components/Card";
 import Expo from "expo";
-import { Constants, Font, AdMobInterstitial } from "expo";
+import { Constants, Font, FacebookAds } from "expo";
 import * as Animatable from "react-native-animatable";
 import Modal from "react-native-modal";
 import Icons from "@expo/vector-icons/Ionicons";
@@ -47,13 +46,18 @@ class GameState extends React.Component {
       percentageOne: "0",
       percentageTwo: "0",
       points: 0,
-      fontLoaded: false
+      fontLoaded: false,
+      androidHeight : '0',
+      androidWidth : '0',
+      lastFirstArray : 'null',
+      isAdReady : false
     };
   }
 
   async componentDidMount() {
+    FacebookAds.AdSettings.addTestDevice(FacebookAds.AdSettings.currentDeviceHash);
     await Font.loadAsync({
-      gothic : require("../ImageAssets/Fonts/gothic.ttf")
+      gothic: require("../ImageAssets/Fonts/gothic.ttf")
     });
     this.setState({
       fontLoaded: true
@@ -61,6 +65,10 @@ class GameState extends React.Component {
   }
 
   componentWillMount() {
+    console.log(height, width)
+    // if(Platform.OS === 'android'){
+
+    // }
     this._retrieveData();
     const firstArray = this.getRandomInt(0, 27);
     const firstArraySecond = this.getRandomInt(0, 2);
@@ -72,6 +80,7 @@ class GameState extends React.Component {
       secondArraySecond = this.getRandomInt(0, 2);
       console.log(secondArraySecond);
     }
+  
 
     const dataSet = Object.values(data);
 
@@ -84,7 +93,8 @@ class GameState extends React.Component {
       questionTwo: questionTwoText,
       firstArray: firstArraySecond,
       secondArraySecond: secondArraySecond,
-      firstArrayNum: firstArray
+      firstArrayNum: firstArray,
+      lastFirstArray : firstArray
     });
 
     const database = firebase.database();
@@ -105,7 +115,7 @@ class GameState extends React.Component {
       });
     });
   }
-  //Retrieves points when component mounts. 
+  //Retrieves points when component mounts.
   _retrieveData = async () => {
     try {
       const value = await AsyncStorage.getItem("Points");
@@ -120,11 +130,15 @@ class GameState extends React.Component {
       console.log(error);
     }
   };
-  //Async Storage function that stores the points everytime they are incremented. 
+  //Async Storage function that stores the points everytime they are incremented.
   _storeData = async () => {
     try {
-      await AsyncStorage.setItem("Points", this.state.points.toString());
-      console.log("added");
+      const points = parseInt(this.state.points) + 1;
+      await AsyncStorage.setItem("Points", points.toString());
+      this.setState({
+        points : points
+      })
+      
     } catch (error) {
       console.log(error);
     }
@@ -145,7 +159,7 @@ class GameState extends React.Component {
   getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min)) + min;
   }
-  //Once the questions are already chosen everytime a new one is called for this function randomizes them. 
+  //Once the questions are already chosen everytime a new one is called for this function randomizes them.
   Randomize() {
     var firstArray = this.getRandomInt(0, 27);
     var secondArray = this.getRandomInt(0, 27);
@@ -161,6 +175,9 @@ class GameState extends React.Component {
 
       console.log(secondArraySecond);
     }
+    while (firstArray === this.state.lastFirstArray){
+      firstArray = this.getRandomInt(0, 27);
+    }
 
     const dataSet = Object.values(data);
     console.log(dataSet[firstArray][firstArraySecond]);
@@ -172,7 +189,8 @@ class GameState extends React.Component {
       questionTwo: questionTwoText,
       firstArray: firstArraySecond,
       secondArray: secondArraySecond,
-      firstArrayNum: firstArray
+      firstArrayNum: firstArray,
+      lastFirstArray : firstArray
     });
   }
 
@@ -181,13 +199,12 @@ class GameState extends React.Component {
     this.image.transitionTo({ opacity: 0.2 });
   }
 
-
   //async function that responds on results screen swipe
   async onSwipeLeft(gestureState) {
     this.ViewOne.slideOutLeft(200);
     this.ViewTwo.slideOutLeft(200);
-   await this.ViewThree.slideOutLeft(200);
-   
+    await this.ViewThree.slideOutLeft(200);
+
     this.Randomize();
     this.setState({ backgroundVisible: false });
   }
@@ -210,25 +227,21 @@ class GameState extends React.Component {
       });
     questionTwoRef
       .once("value")
-      .then(snapshot => {
+      .then(async (snapshot) => {
         const numberQuestionTwo = parseInt(snapshot.val());
-        this.setState({ numberQuestionTwo: numberQuestionTwo });
+       await this.setState({ numberQuestionTwo: numberQuestionTwo });
+       
       })
       .catch(error => {
         alert(error);
       })
-      .then(() => {
-        {
-          this.getPercentages();
-        }
-      })
-      .catch(error => {
-        alert(error);
-      });
+
+   await this.getPercentages();
+   
   }
-//async function that receives the total votes from the database function and returns a
-//percentage for each one. 
-  async getPercentages() {
+  //async function that receives the total votes from the database function and returns a
+  //percentage for each one.
+   async getPercentages() {
     const questionOne = this.state.numberQuestionOne;
 
     const questionTwo = this.state.numberQuestionTwo;
@@ -239,34 +252,24 @@ class GameState extends React.Component {
     if (perOne + perTwo !== 100) {
       perOne++;
     }
-    console.log(perOne, perTwo);
+
     await this.setState({
       percentageOne: perOne,
       percentageTwo: perTwo
     });
   }
-  async showFullAd(){
-    AdMobInterstitial.setAdUnitID('ca-app-pub-3940256099942544/4411468910');
-    AdMobInterstitial.setTestDeviceID('EMULATOR')
-    AdMobInterstitial.addEventListener('interstitialDidLoad',() => {
-      console.log("interstitialDidLoad")
+  showAd(){
+    FacebookAds.InterstitialAdManager.showAd('1866535820320971_1866536080320945')
+    .then(didClick => {
+      console.log(clicked)
+      FacebookAds.AdSettings.clearTestDevices();
     })
-    AdMobInterstitial.addEventListener('interstitialDidFailToLoad', () => {
-      console.log("failed to load")
+    .catch(error => {
+      console.log(error)
     })
-    AdMobInterstitial.addEventListener('interstitialDidOpen',() => {
-      console.log('Did Open')
-    })
-    AdMobInterstitial.addEventListener('interstitialDidClose', () => {
-      console.log('Did Close')
-    })
-    AdMobInterstitial.addEventListener('interstitialWillLeaveApplication', () => {
-      console.log('Left Application')
-    })
-    await AdMobInterstitial.requestAdAsync();
-    await AdMobInterstitial.showAdAsync();
   }
-  
+
+
 
   conditionalLoading() {
     if (
@@ -278,14 +281,15 @@ class GameState extends React.Component {
           style={{
             height: height,
             width: width,
+            justifyContent : 'center',
             backgroundColor: "white",
-            paddingTop: Constants.statusBarHeight
+            // paddingTop: Platform.OS === "ios" ? Constants.statusBarHeight : "8%"
           }}
         >
           <Animatable.View
-            animation = 'zoomIn'
-            ref = {(ref)=> {
-              this.Header = ref
+            animation="zoomIn"
+            ref={ref => {
+              this.Header = ref;
             }}
             style={{
               width: width - 40,
@@ -296,112 +300,135 @@ class GameState extends React.Component {
               alignItems: "center"
             }}
           >
-            <Text style={{ fontSize: 32, fontFamily : 'gothic' }}>Would You Rather</Text>
-          </Animatable.View>
-          <Animatable.View animation = 'slideInRight'
-          ref = {(ref)=> {
-            this.questionOne = ref
-          }}>
-          <TouchableOpacity
-            onPress={async () => {
-              this.setState({
-                questionPressed: 1,
-                points: parseInt(this.state.points) + 1
-              });
-              this._storeData();
-              const database = firebase.database();
-
-              const resultsRef = database.ref(
-                this.state.firstArrayNum + "/" + 1
-              );
-              resultsRef.transaction(number => {
-                if (number) {
-                  number = number + 1;
-                }
-                return number;
-              });
-
-              this.questionOne.slideOutLeft(200)
-              this.ORImage.zoomOut(200)
-              this.Header.zoomOut(200)
-            await  this.questionTwo.slideOutRight(200)
-            this.databaseFunction();
-              this.setState({
-                backgroundVisible : true
-              })
-
-            }}
-            style={{
-              width: width - 40,
-              height: 260,
-              backgroundColor: "black",
-              alignSelf: "center",
-              top: 40,
-              justifyContent: "center",
-              alignItems: "center"
-            }}
-          >
-            <Text style={{ fontSize: 32, color: "white",fontFamily : 'gothic', textAlign : 'center' }}>
-              {this.state.questionOne}
+            <Text style={{ fontSize: 32, fontFamily: "gothic" }}>
+              Would You Rather
             </Text>
-          </TouchableOpacity>
           </Animatable.View>
           <Animatable.View
-            ref = {(ref) => {
-              this.questionTwo = ref
+            animation="slideInRight"
+            ref={ref => {
+              this.questionOne = ref;
             }}
-           animation = 'slideInLeft'>
-          <TouchableOpacity
-           onPress={async () => {
-              this.setState({
-                questionPressed: 2,
-                points: parseInt(this.state.points) + 1
-              });
-              this._storeData();
-              const database = firebase.database();
+             >
+            <TouchableOpacity
+              onPress={async () => {
+                this.setState({
+                  questionPressed: 1,
+                 
+                });
+                this._storeData();
+                const database = firebase.database();
 
-              const resultsRef = database.ref(
-                this.state.firstArrayNum + "/" + 2
-              );
-              resultsRef.transaction(number => {
-                if (number) {
-                  number = number + 1;
-                }
-                return number;
-              });
-            
-              this.questionOne.slideOutLeft(200)
-              this.ORImage.zoomOut(200)
-              this.Header.zoomOut(200)
-            await  this.questionTwo.slideOutRight(200)
-            this.databaseFunction();
-              this.setState({
-                backgroundVisible : true
-              })
-              
+                const resultsRef = database.ref(
+                  this.state.firstArrayNum + "/" + 1
+                );
+                resultsRef.transaction(number => {
+                  if (number) {
+                    number = number + 1;
+                  }
+                  return number;
+                });
 
-            }}
-            style={{
-              width: width - 40,
-              height: 260,
-              backgroundColor: "black",
-              alignSelf: "center",
-              top: 50,
-              justifyContent: "center",
-              alignItems: "center"
-            }}
-          >
-            <Text style={{ fontSize: 32, color: "white", fontFamily : 'gothic', textAlign : 'center' }}>
-              {this.state.questionTwo}
-            </Text>
-          </TouchableOpacity>
+                this.questionOne.slideOutLeft(200);
+                this.ORImage.zoomOut(200);
+                this.Header.zoomOut(200);
+                await this.questionTwo.slideOutRight(200);
+               await this.databaseFunction();
+              await  this.setState({
+                  backgroundVisible: true
+                });
+              }}
+              style={{
+                width: width - 40,
+              //  aspectRatio : Platform.OS === 'ios' ? 1.25 / 1 : 1.25 / 1,
+              height : height / 3,
+                backgroundColor: "black",
+                alignSelf: "center",
+                top : '5%',
+                justifyContent: "center",
+                alignItems: "center",
+             
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: Platform.OS === 'ios' ? 32 : 26,
+                  color: "white",
+                  fontFamily: "gothic",
+                  textAlign: "center"
+                }}
+              >
+                {this.state.questionOne}
+              </Text>
+            </TouchableOpacity>
+           
           </Animatable.View>
+          <Animatable.View
+              ref={ref => {
+                this.questionTwo = ref;
+              }}
+              animation="slideInLeft"
+            >
+              <TouchableOpacity
+                onPress={async () => {
+                  this.setState({
+                    questionPressed: 2,
+                    
+                  });
+                  this._storeData();
+                  const database = firebase.database();
+
+                  const resultsRef = database.ref(
+                    this.state.firstArrayNum + "/" + 2
+                  );
+                  resultsRef.transaction(number => {
+                    if (number) {
+                      number = number + 1;
+                    }
+                    return number;
+                  });
+
+                  this.questionOne.slideOutLeft(200);
+                  this.ORImage.zoomOut(200);
+                  this.Header.zoomOut(200);
+                  await this.questionTwo.slideOutRight(200);
+                await  this.databaseFunction();
+                  await this.setState({
+                    backgroundVisible: true
+                  });
+                }}
+                style={{
+                  width: width - 40,
+                  // aspectRatio : Platform.OS === 'ios' ? 1.25 / 1 : 1.25 / 1,
+                  height : height / 3,
+                  backgroundColor: "black",
+                  alignSelf: "center",
+                  top : Platform.OS === 'ios' ? '10%' : '5%',
+                  justifyContent: "center",
+                  alignItems: "center"
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: Platform.OS === 'ios' ? 32 : 26,
+                    color: "white",
+                    fontFamily: "gothic",
+                    textAlign: "center"
+                  }}
+                >
+                  {this.state.questionTwo}
+                </Text>
+              </TouchableOpacity>
+            </Animatable.View>
+
           <View
             style={{
               width: width - 40,
               flexDirection: "row",
-              right : width - 320,
-              top: 80,
+              height : height / 9,
+              alignItems: 'center',
+              top : height / 30,
+              right : width / 6,
               justifyContent: "space-evenly"
             }}
           >
@@ -412,174 +439,177 @@ class GameState extends React.Component {
             >
               <Icons name="ios-arrow-back" size={50} />
             </TouchableOpacity>
-            <Text style={{ fontSize: 40, left : 25 }}>{this.state.points}</Text>
+            <Text style={{ fontSize: 40, left: 25 }}>{this.state.points}</Text>
           </View>
-          <Animatable.Image animation = 'zoomIn' 
-          ref = {(ref) => {
-            this.ORImage = ref
-          }}
-            source = {OR} resizeMode = 'contain' style = {{height : 120, 
-            width : 120, position : 'absolute', top : height - 430, left : width - 260}}
+          <Animatable.Image
+            animation="zoomIn"
+            ref={ref => {
+              this.ORImage = ref;
+            }}
+            source={OR}
+            resizeMode="contain"
+            style={{
+              height: 120,
+              width: 120,
+              position: "absolute",
+              top: height / 2.28,
+              left: width / 3
+            }}
           />
         </View>
       );
     } else if (this.state.backgroundVisible === true && this.state.fontLoaded) {
       return (
         <Animatable.View
-        animation = 'slideInRight'
+          animation="slideInRight"
           style={{
             backgroundColor: "white",
             height: height,
             width: width,
-            paddingTop:Constants.statusBarHeight,
-            
+            paddingTop: Platform.OS === 'ios' ? Constants.statusBarHeight : '8%'
           }}
         >
-        <TouchableOpacity onPress = {async () => {
-           this.ViewOne.slideOutLeft(200);
-    this.ViewTwo.slideOutLeft(200);
-   
-   await this.ViewThree.slideOutLeft(200);
-  await this.showFullAd()
-    this.Randomize();
-    this.setState({ backgroundVisible: false });
-        }}>
-          <Animatable.View
-            ref={ref => {
-              this.ViewOne = ref;
-            }}
-           
-            style={{
-              width: width - 40,
-              alignSelf: "center",
-              justifyContent: "center",
-              alignItems: "center",
-              borderWidth: 6,
-              height: 100
-            }}
-          >
-            <Animatable.Text
-              ref={ref => {
-                this.ResultsTextOne = ref;
-              }}
+          <TouchableOpacity
+            onPress={async () => {
+              this.ViewOne.slideOutLeft(200);
+              this.ViewTwo.slideOutLeft(200);
               
-              style={{ fontSize: 40, fontFamily: "gothic" }}
-            >
-              Results
-            </Animatable.Text>
-          </Animatable.View>
-          <GestureRecognizer
-            onSwipeLeft={state => {
-              this.onSwipeLeft(state);
+               this.ViewThree.slideOutLeft(200);
+               let points = this.state.points.toString()
+               if(points.endsWith('5') === true ){
+                 console.log('showing ad')
+                this.showAd()
+               }
+               if (points.endsWith('0') === true){
+                 console.log('showing ad')
+                 this.showAd()
+               }
+              
+              this.Randomize();
+              this.setState({ backgroundVisible: false });
             }}
           >
             <Animatable.View
               ref={ref => {
-                this.ViewTwo = ref;
+                this.ViewOne = ref;
               }}
-             
               style={{
-                height: height - 200,
                 width: width - 40,
                 alignSelf: "center",
-                backgroundColor: "black",
-                justifyContent: "space-evenly",
-                top : 20
-             
+                justifyContent: "center",
+                alignItems: "center",
+                borderWidth: 6,
+                height: 100
               }}
             >
-              {/* <View
-                style={{ position: "absolute", top: height - 580, left: 30 }}
+              <Animatable.Text
+                ref={ref => {
+                  this.ResultsTextOne = ref;
+                }}
+                style={{ fontSize: 40, fontFamily: "gothic" }}
               >
-                <AnimatedBar
-                  value={this.state.percentageOne}
-                  delay={DELAY}
-                  text={this.state.percentageOne}
-                />
-              </View>
-              <View
-                style={{ position: "absolute", top: height - 380, left: 30 }}
-              >
-                <AnimatedBar
-                  value={this.state.percentageTwo}
-                  delay={DELAY}
-                  text={this.state.percentageTwo}
-                />
-              </View> */}
+                Results
+              </Animatable.Text>
+            </Animatable.View>
+            <GestureRecognizer
+              onSwipeLeft={state => {
+                this.onSwipeLeft(state);
+              }}
+            >
               <Animatable.View
                 ref={ref => {
-                  this.ViewThree = ref;
+                  this.ViewTwo = ref;
                 }}
                 style={{
-                  height: 400,
-                  width: width - 120,
+                  height: height / 1.32,
+                  width: width - 40,
                   alignSelf: "center",
-                  justifyContent: "space-evenly"
+                  backgroundColor: "black",
+                  justifyContent: "space-evenly",
+                  top: '2%'
                 }}
               >
-                <Text
-                  style={{
-                    color: "white",
-                    textAlign: "left",
-                    fontSize: 24,
-                    fontFamily: "gothic"
-                  }}
-                >
-                  {this.state.questionOne}
-                </Text>
-                <AnimatedBar
-                  value={this.state.percentageOne}
-                  delay={DELAY}
-                  text={this.state.percentageOne}
-                />
-             
-           
-                <Text
-                  style={{
-                    color: "white",
-                    textAlign: "left",
-                    fontSize: 24,
-                    fontFamily: "gothic"
-                  }}
-                >
                 
-                  {this.state.questionTwo}
-                </Text>
-                <AnimatedBar
-                  value={this.state.percentageTwo}
-                  delay={DELAY}
-                  text={this.state.percentageTwo}
+                <Animatable.View
+                  ref={ref => {
+                    this.ViewThree = ref;
+                  }}
+                  style={{
+                    height:height / 2,
+                    width: width - 120,
+                    alignSelf: "center",
+                    justifyContent : 'space-evenly',
+                    top : '5%'
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "white",
+                      textAlign: "left",
+                      fontSize: 22,
+                      fontFamily: "gothic"
+                    }}
+                  >
+                    {this.state.questionOne}
+                  </Text>
+                  <AnimatedBar
+                    value={this.state.percentageOne}
+                    delay={DELAY}
+                    text={this.state.percentageOne}
+                  />
+
+                  <Text
+                    style={{
+                      color: "white",
+                      textAlign: "left",
+                      fontSize: 22,
+                      fontFamily: "gothic"
+                    }}
+                  >
+                    {this.state.questionTwo}
+                  </Text>
+                  <AnimatedBar
+                    value={this.state.percentageTwo}
+                    delay={DELAY}
+                    text={this.state.percentageTwo}
+                  />
+                  
+                </Animatable.View>
+                
+                <View
+                  style={{
+                    backgroundColor: "white",
+                    height: 2,
+                    width: width - 80,
+                    alignSelf: "center",
+                    top: 30
+                  }}
                 />
+                <View
+                  style={{
+                    width: width,
+                    alignSelf: "center",
+                    alignItems: "center",
+
+                    justifyContent: "center",
+
+                    height: 60
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "white",
+                      fontSize: 22,
+                      textAlign: "center",
+                      fontFamily: "gothic",
+                      top: 10
+                    }}
+                  >
+                    Tap Anywhere to Continue
+                  </Text>
+                </View>
               </Animatable.View>
-              <View style = {{backgroundColor : 'white',
-              height : 2, width : width - 80, alignSelf : 'center', top : 30}}></View>      
-              <View
-                style={{
-                  width: width,
-                  alignSelf: "center",
-                  alignItems: "center",
-                
-                  justifyContent : 'center',
-                 
-                  height : 60
-                }}
-              >
-               
-                <Text
-                  style={{
-                    color: "white",
-                    fontSize: 22,
-                    textAlign: "center",
-                    fontFamily: "gothic", 
-                    top : 10
-                    
-                  }}
-                >
-                  Tap Anywhere to Continue
-                </Text>
-              </View>
-            </Animatable.View>
-          </GestureRecognizer>
+            </GestureRecognizer>
           </TouchableOpacity>
         </Animatable.View>
       );
@@ -587,10 +617,16 @@ class GameState extends React.Component {
   }
 
   render() {
-    return <View style = {{flex : 1,
-    backgroundColor : 'white'}}>
-    {this.conditionalLoading()}
-    </View>;
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "white"
+        }}
+      >
+        {this.conditionalLoading()}
+      </View>
+    );
   }
 }
 

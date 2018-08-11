@@ -1,7 +1,7 @@
 import React from "react";
 import { Text, View, SafeAreaView, Dimensions, TouchableOpacity, StatusBar,
-Image, AsyncStorage, Switch, Animated} from "react-native";
-import {Constants, Font, AdMobRewarded, AdMobInterstitial} from 'expo'
+Image, AsyncStorage, Switch, Animated, Platform} from "react-native";
+import {Constants, Font,FacebookAds} from 'expo'
 import Expo from 'expo'
 import firebase from 'firebase'
 
@@ -20,7 +20,7 @@ var SETTINGSBG =require('../ImageAssets/SETTINGSBG.png')
 var SETTINGSLOGO = require('../ImageAssets/SETTINGSLOGO.png')
 
 
-
+FacebookAds.AdSettings.addTestDevice(FacebookAds.AdSettings.currentDeviceHash);
 class HomeScreen extends React.Component {
   constructor(){
     super();
@@ -30,7 +30,9 @@ class HomeScreen extends React.Component {
       points : 0,
       switchValue : true,
       fontLoaded : false,
-      fadeAnim  : new Animated.Value(0)
+      fadeAnim  : new Animated.Value(0),
+      shopOne : false,
+      shopTwo : false
     }
   }
 
@@ -68,6 +70,7 @@ _retrieveData = async () => {
 
 
 async componentDidMount() {
+  this._retrieveData()
   await Font.loadAsync({
     'buttonFont' : require('../ImageAssets/Fonts/button_font.ttf'),
     'gothic' : require('../ImageAssets/Fonts/gothic.ttf')
@@ -97,7 +100,7 @@ async componentDidMount() {
       
     }
     loadAudio();
-    this._retrieveData()
+  
     
     var handleAudio = async() => {
    
@@ -132,8 +135,31 @@ async componentDidMount() {
     
   }
 
+  showAds(){
+    FacebookAds.InterstitialAdManager.showAd('1866535820320971_1866536080320945')
+    .then(didClick => {
+      console.log('clicked')
+      
+     
+    })
+    .catch(error => {
+      console.log(error)
+    })
+ 
+  }  
     
-
+  _storeData = async () => {
+    try {
+      const points = parseInt(this.state.points) + 10
+    
+      await AsyncStorage.setItem("Points", points.toString());
+     this.setState({
+       points : points
+     })
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
 async muteMusic(){
   this.setState({
@@ -176,9 +202,9 @@ conditionalRenderingSwitch(){
             })
           }
         }}
-        tintColor = 'white'
-        onTintColor = 'white'
-        thumbTintColor = 'black'
+        tintColor = {Platform.OS === 'ios' ? 'white' : 'white'}
+        onTintColor = {Platform.OS === 'ios' ? 'white' : 'white'}
+        thumbTintColor = {Platform.OS === 'ios' ? 'black' : 'white'}
       />
     )
   }
@@ -206,31 +232,7 @@ conditionalRenderingSwitch(){
   }
 }
 
-async showRewardAd(){
-  AdMobRewarded.setTestDeviceID('EMULATOR');
-  AdMobRewarded.setAdUnitID('ca-app-pub-3940256099942544/1712485313');
-  AdMobRewarded.addEventListener("rewardedVideoDidRewardUser", () =>
-  console.log("interstitialDidLoad")
-);
-AdMobRewarded.addEventListener("rewardedVideoDidLoad", () =>
-  console.log("interstitialDidLoad")
-);
-AdMobRewarded.addEventListener("rewardedVideoDidFailToLoad", () =>
-  console.log("interstitialDidLoad")
-);
-AdMobRewarded.addEventListener("rewardedVideoDidOpen", () =>
-  console.log("interstitialDidLoad")
-);
-AdMobRewarded.addEventListener("rewardedVideoDidClose", () =>
-  console.log("interstitialDidLoad")
-);
-AdMobRewarded.addEventListener("rewardedVideoWillLeaveApplication", () =>
-  console.log("interstitialDidLoad")
-);
-await AdMobRewarded.requestAdAsync();
-await AdMobRewarded.showAdAsync();
 
-}
 
 
 conditionalScreenRendering(){
@@ -246,7 +248,14 @@ conditionalScreenRendering(){
         }}  style = {{backgroundColor : 'black',height : height - 80,
         width : width - 40,}}>
         <View style = {{width : width - 40, height : 200, alignItems : 'center', justifyContent : 'center',
-        marginTop : 100}}>
+        marginTop : height / 10}}>
+          <TouchableOpacity onPress = {() => {
+            this._retrieveData()
+          }}>
+          <Text style = {{fontSize : 20, color : 'white', fontFamily : 'gothic'}}>
+            Points : {this.state.points}
+          </Text>
+          </TouchableOpacity>
          <Animatable.Image ref = {(ref) => {
            this.logoImage = ref
          }}  source = {LOGO} 
@@ -256,7 +265,8 @@ conditionalScreenRendering(){
                = {{height : 180, width : 300}}
             />
             </View>
-         <View style = {{height : height - 400, justifyContent : 'space-evenly'}}>
+         <View style = {{height : Platform.OS === 'ios' ? '55%' : '48%'
+          , justifyContent : 'space-evenly'}}>
           <TouchableOpacity onPress = {async() => {
            await this.WelcomeMainView.slideOutLeft
            this.props.navigation.navigate('GameState')
@@ -265,7 +275,7 @@ conditionalScreenRendering(){
           ref = {(ref) => {
             this.buttonOne = ref
           }}
-         style = {{backgroundColor : 'white', height : 80, 
+         style = {{backgroundColor : 'white', height : Platform.OS === 'ios' ? 80 : 60, 
          width : width - 100, alignSelf : 'center',
          justifyContent : 'space-evenly', alignItems : 'center', flexDirection : 'row'}}>
               <Animatable.View animation = 'flash' iterationCount = 'infinite' 
@@ -296,22 +306,22 @@ conditionalScreenRendering(){
           ref = {(ref) => {
            this.buttonTwo = ref
          }}
-           style = {{backgroundColor : 'white', height : 80, 
+           style = {{backgroundColor : 'white', height :  Platform.OS === 'ios' ? 80 : 60, 
          width : width - 100, alignSelf : 'center',
          justifyContent : 'center', alignItems : 'center'}}>
               <Text style = {{fontSize : 36, fontFamily : 'buttonFont'}}>
-                SETTINGS
+                EXTRAS
               </Text>
          </Animatable.View>  
          </TouchableOpacity>
          <TouchableOpacity onPress = {async () =>
           {
-          this.showRewardAd()
+          this.showAds()
           }}>
          <Animatable.View 
           ref = {(ref) => {
            this.buttonTwo = ref
-         }}  style = {{backgroundColor : 'white', height : 80, 
+         }}  style = {{backgroundColor : 'white', height : Platform.OS === 'ios' ? 80 : 60, 
          width : width - 100, alignSelf : 'center', 
          justifyContent : 'center', alignItems : 'center'}}>
               <Text style = {{fontSize : 36, fontFamily : 'buttonFont'}}>
@@ -325,62 +335,151 @@ conditionalScreenRendering(){
       </Animatable.View>
     )
   }else if (this.state.settingsScreen === true && this.state.fontLoaded === true){
+      if(this.state.shopOne === false && this.state.shopTwo === false){
+        return(
+          <Animatable.View ref = {(ref) => {
+            this.MainView = ref
+          }} animation = 'slideInRight'  style = {{flex : 1, paddingTop : Constants.statusBarHeight, 
+          alignItems : 'center'}}>
+          
+            <Animatable.View ref = {(ref) => {
+              this.settingsHeader = ref
+            }}  style = {{height : 100, borderWidth : 8, justifyContent : 'center', alignItems : 'center', 
+            marginTop : Constants.statusBarHeight, width : width - 40}}>
+                <Text style = {{fontSize : 50 , fontFamily : 'gothic'}}>
+                  Extras
+                </Text>
+            </Animatable.View>
+            <Animatable.View ref = {(ref) => {
+              this.blackContainer = ref
+            }} style = {{backgroundColor : 'black', alignItems : 'center',top : '5%', height : '70%', width : width - 40,
+            justifyContent : 'space-evenly'}}>
+     
+            <Animatable.View ref = {(ref) => {
+              this.soundView = ref
+            }}  style = {{aspectRatio : 3 / 1, borderWidth : 5, justifyContent : 'space-between',flexDirection : 'row'
+            , alignItems : 'center', padding : 10,
+            width : width - 100, borderColor : 'white'}}>
+                <Text style = {{fontSize : 32, color : 'white', fontFamily : 'gothic'}}>
+                  Sound
+                </Text>
+                {this.conditionalRenderingSwitch()}
+             
+            </Animatable.View>
+            <TouchableOpacity onPress = {() => {
+              this.setState({
+                shopOne : true
+              })
+            }}>
+            <Animatable.View ref = {(ref) => {
+              this.soundView = ref
+            }}  style = {{aspectRatio : 3 / 1, borderWidth : 5, justifyContent : 'center'
+            , alignItems : 'center', padding : 10,
+             width : width - 100, borderColor : 'white'}}>
+                <Text style = {{fontSize : 32, color : 'white', fontFamily : 'gothic'}}>
+                  Shop
+                </Text>
+              
+             
+            </Animatable.View>
+            </TouchableOpacity>
+            <TouchableOpacity>
+            <Animatable.View ref = {(ref) => {
+              this.soundView = ref
+            }}  style = {{aspectRatio : 3 / 1, borderWidth : 5, justifyContent : 'center'
+            , alignItems : 'center', padding : 10,
+            width : width - 100, borderColor : 'white'}}>
+                <Text style = {{fontSize : 32, color : 'white', fontFamily : 'gothic'}}>
+                  Settings
+                </Text>
+              
+             
+            </Animatable.View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress = { async () => {
+                await this.MainView.slideOutRight(200)
+                this.setState({
+                  settingsScreen : false
+                })
+              }}
+             style = {{ right : width - 250}}>
+              <Icons 
+              name = 'ios-arrow-back' size = {50}  color = 'white'
+                      />
+            </TouchableOpacity>
+            </Animatable.View>
+               
+          </Animatable.View>
+        )
+      }else if (this.state.shopOne === true && this.state.shopTwo === false){
+        return(
+          <Animatable.View ref = {(ref) => {
+            this.ShopView = ref
+          }} animation = 'slideInRight'  style = {{flex : 1, paddingTop : Constants.statusBarHeight, 
+          alignItems : 'center'}}>
+             <Animatable.View ref = {(ref) => {
+              this.shopHeader = ref
+            }}  style = {{height : 100, borderWidth : 8, justifyContent : 'center', alignItems : 'center', 
+            top : 50, width : width - 40}}>
+                <Text style = {{fontSize : 50 , fontFamily : 'gothic'}}>
+                  Shop
+                </Text>
+            </Animatable.View>
+            <Animatable.View ref = {(ref) => {
+              this.ShopBlackContainer = ref
+            }} style = {{backgroundColor : 'black', alignItems : 'center',top : 80, height : height - 250, width : width - 40,
+            justifyContent : 'space-evenly'}}>
+            <Text style = {{fontSize : 32, color : 'white', fontFamily : 'gothic'}}>
+              Coming Soon
+            </Text>
+              {/*
+              This will be the Bar for the menus in case we need more room
+               <TouchableOpacity onPress = {() => {
+              this.setState({
+                shopOne : true
+              })
+            }}>
+            <Animatable.View ref = {(ref) => {
+              this.soundView = ref
+            }}  style = {{height : 100, borderWidth : 5, justifyContent : 'center'
+            , alignItems : 'center', padding : 10,
+            top : 50, width : width - 100, borderColor : 'white'}}>
+            </Animatable.View>
+            </TouchableOpacity>
+            <TouchableOpacity onPress = {() => {
+              this.setState({
+                shopOne : true
+              })
+            }}>
+            <Animatable.View ref = {(ref) => {
+              this.soundView = ref
+            }}  style = {{height : 100, borderWidth : 5, justifyContent : 'center'
+            , alignItems : 'center', padding : 10,
+            top : 50, width : width - 100, borderColor : 'white'}}>
+            </Animatable.View>
+            </TouchableOpacity> */}
+            </Animatable.View>
+            <TouchableOpacity
+              onPress = { async () => {
+            
+                this.setState({
+                  shopOne : false
+                })
+              }}
+             style = {{ right : width - 250, top : 20}}>
+              <Icons 
+              name = 'ios-arrow-back' size = {50}  color = 'white'
+                      />
+            </TouchableOpacity>
+          </Animatable.View>
+        )
+      }else if (this.state.shopOne === true && this.state.shopTwo === true)
     return(
 
-      <Animatable.View ref = {(ref) => {
-        this.MainView = ref
-      }} animation = 'slideInRight'  style = {{flex : 1, paddingTop : Constants.statusBarHeight, 
-      alignItems : 'center'}}>
-      
-        <Animatable.View ref = {(ref) => {
-          this.settingsHeader = ref
-        }}  style = {{height : 100, borderWidth : 8, justifyContent : 'center', alignItems : 'center', 
-        top : 50, width : width - 40}}>
-            <Text style = {{fontSize : 50 , fontFamily : 'gothic'}}>
-              Settings
-            </Text>
-        </Animatable.View>
-        <Animatable.View ref = {(ref) => {
-          this.blackContainer = ref
-        }} style = {{backgroundColor : 'black', alignItems : 'center',top : 80, height : height - 250, width : width - 40}}>
-        <Animatable.View ref = {(ref) => {
-          this.adsView = ref
-        }}  style = {{height : 100, borderWidth : 5, justifyContent : 'space-between',flexDirection : 'row'
-        , alignItems : 'center', padding : 10,
-        top : 20, width : width - 100, borderColor : 'white'}}>
-            <Text style = {{fontSize : 32, color : 'white', fontFamily : 'gothic'}}>
-              No Ads
-            </Text>
-            <Text style = {{fontSize : 32, color : 'white' ,fontFamily : 'gothic'}}>
-              $2.99
-            </Text>
-        </Animatable.View>
-        <Animatable.View ref = {(ref) => {
-          this.soundView = ref
-        }}  style = {{height : 100, borderWidth : 5, justifyContent : 'space-between',flexDirection : 'row'
-        , alignItems : 'center', padding : 10,
-        top : 50, width : width - 100, borderColor : 'white'}}>
-            <Text style = {{fontSize : 32, color : 'white', fontFamily : 'gothic'}}>
-              Sound
-            </Text>
-            {this.conditionalRenderingSwitch()}
-         
-        </Animatable.View>
-        <TouchableOpacity
-          onPress = { async () => {
-            await this.MainView.slideOutRight(200)
-            this.setState({
-              settingsScreen : false
-            })
-          }}
-         style = {{top : height - 520, right : width - 250}}>
-          <Icons 
-          name = 'ios-arrow-back' size = {50}  color = 'white'
-                  />
-        </TouchableOpacity>
-        </Animatable.View>
-           
-      </Animatable.View>
+      <View>
+
+      </View>
     )
   }
 }

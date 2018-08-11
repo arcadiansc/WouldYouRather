@@ -6,29 +6,41 @@ class AnimatedBar extends React.Component {
 
     constructor(props){
         super(props);
+        const {value, delay} = this.props;
         this._width = new Animated.Value(0)
         this.state = {
             color : 'white',
-            fontLoaded : false
+            fontLoaded : false,
+            value : value,
+            delay : delay
 
         }
     }
 
+
   async  componentDidMount(){
+
+   
       await Font.loadAsync({
           "good_times" : require('../ImageAssets/Fonts/good_times.ttf'),
           "gothic" : require('../ImageAssets/Fonts/gothic.ttf')
       })
+
+    
+
+    await  Animated.sequence([
+          Animated.delay(this.state.delay),
+          Animated.timing(this._width, {
+              toValue : this.state.value + 50,       
+           })
+      ]).start();
+      console.log(this.state.value)
+
       this.setState({
-          fontLoaded : true
+          fontLoaded : true,
+          
       })
-        const {value, delay} = this.props;
-        Animated.sequence([
-            Animated.delay(delay),
-            Animated.timing(this._width, {
-                toValue : value + 100,       
-             })
-        ]).start();
+      
        
 
     }
@@ -48,10 +60,11 @@ class AnimatedBar extends React.Component {
             <Animated.View style = {barStyles}>
                 {
                     this.state.fontLoaded ? (
-                        <Text style = {{fontSize : 36,
+                        <Text  style = {{fontSize : 30,
                          color : 'black', textAlign : 'left',
                          fontFamily : 'gothic', bottom : 2}}>
-                    {this.props.text}%
+                         
+                    {this.state.value}%
                 </Text>
                     ) : null
                 }
